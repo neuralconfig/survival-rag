@@ -8,7 +8,8 @@ Survival RAG indexes a collection of survival PDFs and provides a chat interface
 
 - **LlamaIndex**: Framework for building RAG applications
 - **ChromaDB**: Vector database for storing embeddings
-- **Ollama**: For running the LLM and embedding model
+- **SentenceTransformers**: For efficient CPU-based embeddings
+- **Ollama**: For running the LLM model
 
 ## Setup
 
@@ -39,9 +40,11 @@ python scripts/index_documents.py
 
 This will:
 - Recursively scan the `pdfs` directory for PDF files
-- Extract and chunk the text content
-- Create vector embeddings using Ollama
+- Process documents in batches to manage memory usage
+- Extract and chunk the text content with overlap for better retrieval
+- Create vector embeddings using SentenceTransformers
 - Store the index in a `.chroma` directory
+- Track processed files so you can add more PDFs later without reprocessing
 
 ### Chat Interface
 
@@ -53,16 +56,26 @@ python scripts/chat.py
 
 You can then ask questions related to survival and the system will retrieve relevant passages from the documents to provide informed answers.
 
+## Key Features
+
+- **Efficient CPU-based Embeddings**: Uses SentenceTransformers' all-MiniLM-L6-v2 model
+- **Batch Processing**: Handles large document collections efficiently
+- **Incremental Indexing**: Tracks processed files to avoid redundant work
+- **Detailed Progress Tracking**: Shows which files are being processed
+- **Semantic Chunking**: Uses sentence-based chunking with overlap
+
 ## Directory Structure
 
 - `pdfs/`: Directory containing survival PDF documents to be indexed
 - `scripts/`: Python scripts for indexing and querying
 - `.chroma/`: Vector database storage (created after indexing)
+- `.processed_files.json`: Keeps track of indexed files
 
 ## Configuration
 
 The default configuration uses:
-- Ollama server at 10.7.37.23
-- Model: lstep/neuraldaredevil-8b-abliterated:q8_0
+- Ollama server at 10.7.37.23 for the LLM
+- SentenceTransformers for embeddings
+- ChromaDB for vector storage
 
 You can modify these settings in the script files if needed.

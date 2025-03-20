@@ -1,0 +1,6 @@
+venv/
+*.pyc
+__pycache__/
+.chroma/
+CLAUDE.md
+.processed_files.json

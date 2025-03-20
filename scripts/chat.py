@@ -13,7 +13,7 @@ from pathlib import Path
 
 from llama_index.core import Settings, load_index_from_storage, StorageContext
 from llama_index.core.query_engine import RetrieverQueryEngine
-from llama_index.embeddings.ollama import OllamaEmbedding
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.llms.ollama import Ollama
 from llama_index.vector_stores.chroma import ChromaVectorStore
 import chromadb
@@ -26,14 +26,12 @@ logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
 CHROMA_PERSIST_DIR = ".chroma"
 OLLAMA_HOST = "10.7.37.23"
 OLLAMA_MODEL = "lstep/neuraldaredevil-8b-abliterated:q8_0"
+EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"  # Same as indexing script
 
 def load_query_engine():
     """Load the index and create a query engine."""
-    # Set up the embedding model
-    embed_model = OllamaEmbedding(
-        model_name=OLLAMA_MODEL,
-        base_url=f"http://{OLLAMA_HOST}:11434"
-    )
+    # Set up the embedding model - must match the one used for indexing
+    embed_model = HuggingFaceEmbedding(model_name=EMBEDDING_MODEL)
     
     # Set up the LLM
     llm = Ollama(
