@@ -27,19 +27,20 @@ logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
 # Configuration
 CHROMA_PERSIST_DIR = ".chroma"
 INDEX_PERSIST_DIR = "index_storage"  # Same as in index_documents.py
-OLLAMA_HOST = "10.7.37.23"
-OLLAMA_MODEL = "lstep/neuraldaredevil-8b-abliterated:q8_0"
+OLLAMA_HOST = "localhost"  # Default to localhost
+OLLAMA_MODEL = "llama2"    # Default to a common model
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"  # Same as indexing script
 
-def load_query_engine(response_mode="tree_summarize", similarity_top_k=8, streaming=True):
+def load_query_engine(response_mode="tree_summarize", similarity_top_k=8, streaming=True, 
+                model=OLLAMA_MODEL, server=OLLAMA_HOST):
     """Load the index and create a query engine with customizable parameters."""
     # Set up the embedding model - must match the one used for indexing
     embed_model = HuggingFaceEmbedding(model_name=EMBEDDING_MODEL)
     
     # Set up the LLM with enhanced settings for more comprehensive responses
     llm = Ollama(
-        model=OLLAMA_MODEL,
-        base_url=f"http://{OLLAMA_HOST}:11434",
+        model=model,
+        base_url=f"http://{server}:11434",
         request_timeout=300.0,  # Increased timeout for longer responses
         num_ctx=4096,          # Increase context window
         temperature=0.7,       # Slightly higher temperature for more detailed responses
@@ -168,6 +169,8 @@ def main():
                        default='tree_summarize', help='Response generation mode')
     parser.add_argument('--top-k', type=int, default=8, help='Number of relevant documents to retrieve')
     parser.add_argument('--no-streaming', action='store_true', help='Disable streaming for slower but more stable responses')
+    parser.add_argument('--model', type=str, default=OLLAMA_MODEL, help='Ollama model to use')
+    parser.add_argument('--server', type=str, default=OLLAMA_HOST, help='Ollama server address (without port)')
     args = parser.parse_args()
     
     # Check if both ChromaDB and index metadata exist
@@ -183,11 +186,14 @@ def main():
     
     print(f"Loading index from {CHROMA_PERSIST_DIR} and {INDEX_PERSIST_DIR}...")
     streaming_mode = not args.no_streaming
+    print(f"Using model: {args.model}, server: {args.server}")
     print(f"Using response mode: {args.response_mode}, top-k: {args.top_k}, streaming: {streaming_mode}")
     query_engine = load_query_engine(
         response_mode=args.response_mode,
         similarity_top_k=args.top_k,
-        streaming=streaming_mode
+        streaming=streaming_mode,
+        model=args.model,
+        server=args.server
     )
     print("Index loaded successfully!")
     

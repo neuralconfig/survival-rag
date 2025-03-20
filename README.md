@@ -26,7 +26,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-3. Make sure Ollama is running on your server (10.7.37.23) with the `lstep/neuraldaredevil-8b-abliterated:q8_0` model.
+3. Make sure Ollama is running on your server with a suitable LLM model.
 
 ## Usage
 
@@ -77,6 +77,9 @@ python scripts/chat.py --response-mode refine --top-k 5
 # If you have streaming issues, disable streaming for more stable results
 python scripts/chat.py --no-streaming
 
+# Specify a different Ollama model and server
+python scripts/chat.py --model llama2 --server http://localhost:11434
+
 # Available response modes:
 # - tree_summarize: Best for comprehensive, detailed answers (default)
 # - refine: Good for accurate, focused answers
@@ -126,7 +129,7 @@ Then follow the indexing and chat steps again.
 ## Configuration
 
 The default configuration uses:
-- Ollama server at 10.7.37.23 for the LLM
+- Ollama for running the LLM
 - SentenceTransformers for embeddings
 - ChromaDB for vector storage
 
