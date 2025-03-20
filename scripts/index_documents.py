@@ -24,7 +24,8 @@ from typing import List, Dict, Set, Optional
 
 from llama_index.core import Settings, StorageContext, VectorStoreIndex
 from llama_index.core.node_parser import SentenceSplitter
-from llama_index.readers.file import SimpleDirectoryReader
+# Updated import path for SimpleDirectoryReader
+from llama_index.readers.file.base import SimpleDirectoryReader
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 import chromadb
