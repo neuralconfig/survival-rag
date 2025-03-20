@@ -22,12 +22,13 @@ import argparse
 from pathlib import Path
 from typing import List, Dict, Set, Optional
 
+# Updated imports for LlamaIndex modular architecture
 from llama_index.core import Settings, StorageContext, VectorStoreIndex
 from llama_index.core.node_parser import SentenceSplitter
-# Updated import path for SimpleDirectoryReader
 from llama_index.core.readers import SimpleDirectoryReader
-from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+# Import ChromaVectorStore from the vector-stores-chroma package
+from llama_index.vector_stores.chroma import ChromaVectorStore
 import chromadb
 
 # Setup logging
@@ -37,6 +38,7 @@ logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
 # Default configuration
 DEFAULT_PDFS_DIR = Path("pdfs")
 CHROMA_PERSIST_DIR = ".chroma"
+INDEX_PERSIST_DIR = "index_storage"
 PROCESSED_FILES_JSON = ".processed_files.json"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"  # CPU-efficient model
 BATCH_SIZE = 5  # Number of files to process in each batch
@@ -66,7 +68,6 @@ def find_pdf_files(input_dir: Path) -> List[str]:
 
 def process_batch(
     files_to_process: List[str], 
-    vector_store: ChromaVectorStore,
     processed_files: Set[str]
 ) -> None:
     """Process a batch of PDF files."""
@@ -94,6 +95,11 @@ def process_batch(
         
     print(f"Parsing {len(documents)} documents into chunks...")
     
+    # Create Chroma client
+    chroma_client = chromadb.PersistentClient(path=CHROMA_PERSIST_DIR)
+    chroma_collection = chroma_client.get_or_create_collection("survival_docs")
+    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+    
     # Create storage context
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
     
@@ -109,6 +115,12 @@ def process_batch(
     
     # Create index
     index = VectorStoreIndex(nodes, storage_context=storage_context)
+    
+    # Create directory if it doesn't exist
+    os.makedirs(INDEX_PERSIST_DIR, exist_ok=True)
+    
+    # Explicitly save index that can be loaded later
+    index.storage_context.persist(persist_dir=INDEX_PERSIST_DIR)
     
     elapsed = time.time() - start_time
     print(f"Indexing completed in {elapsed:.2f} seconds")
@@ -145,12 +157,6 @@ def main():
     Settings.chunk_size = CHUNK_SIZE
     Settings.chunk_overlap = CHUNK_OVERLAP
     
-    # Create ChromaDB client
-    print(f"Creating ChromaDB persistence at {CHROMA_PERSIST_DIR}")
-    chroma_client = chromadb.PersistentClient(path=CHROMA_PERSIST_DIR)
-    chroma_collection = chroma_client.get_or_create_collection("survival_docs")
-    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-    
     # Load list of already processed files
     processed_files = load_processed_files()
     print(f"Found {len(processed_files)} previously processed files")
@@ -173,11 +179,12 @@ def main():
         batch = files_to_process[i:i+batch_size]
         batch_num = (i // batch_size) + 1
         print(f"\nProcessing batch {batch_num}/{total_batches}")
-        process_batch(batch, vector_store, processed_files)
+        process_batch(batch, processed_files)
         
     print("\nIndexing process completed!")
     print(f"Total files processed: {len(processed_files)}")
-    print(f"Index is stored in {CHROMA_PERSIST_DIR}")
+    print(f"Chroma database is stored in {CHROMA_PERSIST_DIR}")
+    print(f"Index metadata is stored in {INDEX_PERSIST_DIR}")
     print(f"Processed files tracking in {PROCESSED_FILES_JSON}")
 
 if __name__ == "__main__":

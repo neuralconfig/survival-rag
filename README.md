@@ -32,16 +32,17 @@ pip install -r requirements.txt
 
 ### Index Documents
 
-First, index your documents (only needs to be done once):
+First, index your documents (only needs to be done once). For large document collections, it's recommended to process them in smaller batches or by subdirectory:
 
 ```bash
+# Process all documents (warning: could use a lot of memory)
 python scripts/index_documents.py
-```
 
-You can specify a different input directory and batch size:
+# Process specific subfolder with smaller batch size 
+python scripts/index_documents.py --input-dir pdfs/medical --batch-size 2
 
-```bash
-python scripts/index_documents.py --input-dir test_pdfs --batch-size 3
+# Process another subfolder to add more documents incrementally
+python scripts/index_documents.py --input-dir "pdfs/Survivalist Library ( Categorized )/01) General Survival" --batch-size 2
 ```
 
 This will:
@@ -60,7 +61,42 @@ Start the chat interface to query your indexed documents:
 python scripts/chat.py
 ```
 
-You can then ask questions related to survival and the system will retrieve relevant passages from the documents to provide informed answers.
+You can enable debug mode to see which documents are being retrieved:
+
+```bash
+# Basic usage
+python scripts/chat.py
+
+# Start with debug mode enabled
+python scripts/chat.py --debug
+
+# Adjust response generation mode and relevance parameters
+python scripts/chat.py --response-mode tree_summarize --top-k 10
+python scripts/chat.py --response-mode refine --top-k 5
+
+# If you have streaming issues, disable streaming for more stable results
+python scripts/chat.py --no-streaming
+
+# Available response modes:
+# - tree_summarize: Best for comprehensive, detailed answers (default)
+# - refine: Good for accurate, focused answers
+# - compact: Shorter, more concise responses
+# - simple: Basic question-answering without additional processing
+
+# Or toggle debug mode within the chat session
+> debug on
+> debug off
+```
+
+In the chat interface, you can:
+- Ask questions related to survival topics
+- Type 'debug on' or 'debug off' to toggle showing the retrieved documents
+- Type 'exit' or 'quit' to end the session
+
+The debug view will show:
+- The sources of retrieved documents
+- Relevance scores for each document
+- A preview of the document content used to generate the answer
 
 ## Key Features
 
@@ -75,7 +111,17 @@ You can then ask questions related to survival and the system will retrieve rele
 - `pdfs/`: Directory containing survival PDF documents to be indexed
 - `scripts/`: Python scripts for indexing and querying
 - `.chroma/`: Vector database storage (created after indexing)
+- `index_storage/`: Index metadata storage (created after indexing)
 - `.processed_files.json`: Keeps track of indexed files
+
+## Maintenance
+
+To clear the index and start over:
+```bash
+rm -rf .chroma index_storage .processed_files.json
+```
+
+Then follow the indexing and chat steps again.
 
 ## Configuration
 

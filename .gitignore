@@ -2,5 +2,6 @@ venv/
 *.pyc
 __pycache__/
 .chroma/
+index_storage/
 CLAUDE.md
 .processed_files.json
