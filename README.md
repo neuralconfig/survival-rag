@@ -77,8 +77,8 @@ python scripts/chat.py --response-mode refine --top-k 5
 # If you have streaming issues, disable streaming for more stable results
 python scripts/chat.py --no-streaming
 
-# Specify a different Ollama model and server
-python scripts/chat.py --model llama2 --server http://localhost:11434
+# Specify a different Ollama model and server address (only the hostname/IP without protocol or port)
+python scripts/chat.py --model llama2 --server 192.168.1.1
 
 # Available response modes:
 # - tree_summarize: Best for comprehensive, detailed answers (default)
