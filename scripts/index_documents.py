@@ -18,6 +18,7 @@ import sys
 import json
 import logging
 import time
+import argparse
 from pathlib import Path
 from typing import List, Dict, Set, Optional
 
@@ -32,8 +33,8 @@ import chromadb
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
 
-# Configuration
-PDFS_DIR = Path("pdfs")
+# Default configuration
+DEFAULT_PDFS_DIR = Path("pdfs")
 CHROMA_PERSIST_DIR = ".chroma"
 PROCESSED_FILES_JSON = ".processed_files.json"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"  # CPU-efficient model
@@ -53,10 +54,10 @@ def save_processed_files(processed_files: Set[str]) -> None:
     with open(PROCESSED_FILES_JSON, 'w') as f:
         json.dump(list(processed_files), f, indent=2)
 
-def find_pdf_files() -> List[str]:
-    """Find all PDF files in the pdfs directory."""
+def find_pdf_files(input_dir: Path) -> List[str]:
+    """Find all PDF files in the input directory."""
     pdf_files = []
-    for root, _, files in os.walk(PDFS_DIR):
+    for root, _, files in os.walk(input_dir):
         for file in files:
             if file.lower().endswith('.pdf'):
                 pdf_files.append(os.path.join(root, file))
@@ -117,7 +118,22 @@ def process_batch(
 
 def main():
     """Main function to index documents."""
-    print(f"Starting indexing process for documents in {PDFS_DIR}...")
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="Index PDF documents for Survival RAG")
+    parser.add_argument("--input-dir", type=str, default=DEFAULT_PDFS_DIR, 
+                        help=f"Input directory containing PDF files (default: {DEFAULT_PDFS_DIR})")
+    parser.add_argument("--batch-size", type=int, default=BATCH_SIZE,
+                        help=f"Number of files to process in each batch (default: {BATCH_SIZE})")
+    args = parser.parse_args()
+    
+    input_dir = Path(args.input_dir)
+    batch_size = args.batch_size
+    
+    if not input_dir.exists() or not input_dir.is_dir():
+        print(f"Error: Input directory '{input_dir}' does not exist or is not a directory.")
+        sys.exit(1)
+    
+    print(f"Starting indexing process for documents in {input_dir}...")
     
     # Create embedding function using SentenceTransformers (CPU-efficient)
     print(f"Using embedding model: {EMBEDDING_MODEL}")
@@ -139,7 +155,7 @@ def main():
     print(f"Found {len(processed_files)} previously processed files")
     
     # Find all PDF files
-    all_pdf_files = find_pdf_files()
+    all_pdf_files = find_pdf_files(input_dir)
     print(f"Found {len(all_pdf_files)} PDF files in total")
     
     # Filter out already processed files
@@ -151,10 +167,10 @@ def main():
         return
     
     # Process files in batches
-    total_batches = (len(files_to_process) + BATCH_SIZE - 1) // BATCH_SIZE
-    for i in range(0, len(files_to_process), BATCH_SIZE):
-        batch = files_to_process[i:i+BATCH_SIZE]
-        batch_num = (i // BATCH_SIZE) + 1
+    total_batches = (len(files_to_process) + batch_size - 1) // batch_size
+    for i in range(0, len(files_to_process), batch_size):
+        batch = files_to_process[i:i+batch_size]
+        batch_num = (i // batch_size) + 1
         print(f"\nProcessing batch {batch_num}/{total_batches}")
         process_batch(batch, vector_store, processed_files)
         

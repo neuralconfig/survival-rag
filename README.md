@@ -38,6 +38,12 @@ First, index your documents (only needs to be done once):
 python scripts/index_documents.py
 ```
 
+You can specify a different input directory and batch size:
+
+```bash
+python scripts/index_documents.py --input-dir test_pdfs --batch-size 3
+```
+
 This will:
 - Recursively scan the `pdfs` directory for PDF files
 - Process documents in batches to manage memory usage
