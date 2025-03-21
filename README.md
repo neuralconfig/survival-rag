@@ -80,11 +80,11 @@ python scripts/chat.py --no-streaming
 # Specify a different Ollama model and server address (only the hostname/IP without protocol or port)
 python scripts/chat.py --model llama2 --server 192.168.1.1
 
-# Available response modes:
-# - tree_summarize: Best for comprehensive, detailed answers (default)
-# - refine: Good for accurate, focused answers
-# - compact: Shorter, more concise responses
-# - simple: Basic question-answering without additional processing
+# Available response modes (impact both quality and number of API calls):
+# - tree_summarize: Best for comprehensive, detailed answers (default, moderate API calls)
+# - refine: Good for accurate, focused answers (most API calls - one per document)
+# - compact: Shorter, more concise responses (fewer API calls)
+# - simple: Basic question-answering without additional processing (fewest API calls)
 
 # Or toggle debug mode within the chat session
 > debug on
