@@ -6,6 +6,10 @@ This script provides a command-line interface to query the indexed survival docu
 using an Ollama LLM with RAG capabilities.
 """
 
+import os
+# Disable ChromaDB telemetry
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+
 import argparse
 import sys
 import logging
@@ -14,6 +18,7 @@ from pathlib import Path
 # Updated imports for LlamaIndex modular architecture
 from llama_index.core import Settings, load_index_from_storage, StorageContext
 from llama_index.core.query_engine import RetrieverQueryEngine
+from llama_index.core.prompts import PromptTemplate
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.llms.ollama import Ollama
 # Import ChromaVectorStore from the vector-stores-chroma package
@@ -65,13 +70,9 @@ def load_query_engine(response_mode="tree_summarize", similarity_top_k=8, stream
     # Load index using the storage context
     index = load_index_from_storage(storage_context=storage_context)
     
-    # Create query engine with enhanced settings for more detailed responses
-    query_engine = index.as_query_engine(
-        similarity_top_k=similarity_top_k,  # Number of relevant documents to retrieve
-        response_mode=response_mode,      # Mode for response generation
-        streaming=streaming,             # Can be disabled for more stable responses
-        # Add custom prompt to get more detailed answers with file references
-        text_qa_template="""
+    # Create a proper PromptTemplate object
+    qa_template = PromptTemplate(
+        template="""
 You are a survival expert assistant. Answer the question based on the provided context. 
 Be comprehensive and detailed in your response, providing specific information and practical advice.
 Include at least 2-3 paragraphs in your answer whenever possible.
@@ -89,6 +90,14 @@ Question:
 
 Answer:
 """
+    )
+    
+    # Create query engine with enhanced settings for more detailed responses
+    query_engine = index.as_query_engine(
+        similarity_top_k=similarity_top_k,  # Number of relevant documents to retrieve
+        response_mode=response_mode,      # Mode for response generation
+        streaming=streaming,             # Can be disabled for more stable responses
+        text_qa_template=qa_template     # Use the proper template object
     )
     
     return query_engine

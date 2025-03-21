@@ -14,6 +14,9 @@ Features:
 """
 
 import os
+# Disable ChromaDB telemetry
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+
 import sys
 import json
 import logging
